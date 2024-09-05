@@ -20,7 +20,7 @@ async function main() {
     WssService.initWss({ server: httpServer }); // Crea servidor webSocket con la configuracion de express
 
     server.setRouter(AppRoutes.routes);
-    server.setRouterToRedirectPublicPath();
+    // server.setRouterToRedirectPublicPath();
 
     httpServer.listen(envs.PORT, () => {
         console.log(`Server running on ${envs.PORT}`);

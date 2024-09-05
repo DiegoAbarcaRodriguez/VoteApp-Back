@@ -21,7 +21,7 @@ export class UserRoutes {
         router.post('/check-jwt', JWTMiddleware.validateJWT, controller.checkJWT);
         router.post('/validate-xtoken', XTokenMiddleware.validateToken, controller.checkXToken);
         router.post('/recover-password', controller.recoverPassword);
-        router.post('/update-password', controller.updatePassword);
+        router.put('/update-password', controller.updatePassword);
 
 
         return router;

@@ -231,12 +231,32 @@ export class UserService {
                 google: true
             }
 
+            let _id;
+            
             if (!userByName?.google || !userByEmail?.google) {
-                await userModel.create(user);
+                _id = (await userModel.create(user))._id;
+            }
+
+            if (userByName?.google) {
+                _id = userByName._id;
+            }
+
+            if (userByEmail?.google) {
+                _id = userByEmail._id;
+            }
+
+            const token = await JwtAdapter.generateToken({ _id });
+
+            if (!token) {
+                throw CustomError.internalServer('It has ocurred an error by generating the token');
             }
 
 
-            return user;
+            return {
+                user,
+                token
+            };
+
         } catch (error) {
             console.log(error);
             throw error;

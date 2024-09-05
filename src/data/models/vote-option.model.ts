@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const voteOptionSchema = new mongoose.Schema({
     title: {
@@ -16,6 +16,10 @@ const voteOptionSchema = new mongoose.Schema({
     amount: {
         type: Number,
         default: 0
+    },
+    poll_id: {
+        type: mongoose.Types.ObjectId,
+        require: [true, 'poll_id is required']
     }
 });
 
