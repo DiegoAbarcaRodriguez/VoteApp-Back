@@ -1,7 +1,9 @@
 import { pollModel } from "../../data/models/poll.model";
 import { CreatePollDto } from "../../domain/dtos/create-poll.dto";
 import { PaginationDto } from "../../domain/dtos/pagination.dto";
+import { UpdatePollDto } from "../../domain/dtos/update-poll.dto";
 import { CustomError } from "../../domain/errors/custom.error";
+import { PollEntity } from '../../domain/entities/poll.entity';
 
 export class PollService {
     constructor() { }
@@ -15,6 +17,39 @@ export class PollService {
 
             await pollModel.create(createPollDto);
             return true;
+
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
+    updatePoll = async (updatePollDto: UpdatePollDto, _id: string) => {
+        try {
+            const existingPoll = await pollModel.findById(_id);
+            if (!existingPoll) {
+                throw CustomError.notFound('Poll not found!');
+            }
+
+            const poll = await pollModel.findByIdAndUpdate(_id, updatePollDto.value, { new: true });
+            const newPoll = poll as any;
+            return { ok: true, poll: newPoll?._doc };
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
+    deletePoll = async (_id: string) => {
+        try {
+            const existingPoll = await pollModel.findById(_id);
+            if (!existingPoll) {
+                throw CustomError.notFound('Poll not found!');
+            }
+
+            const eliminatedPoll = await pollModel.findByIdAndDelete(_id, { new: true });
+            const newPoll = eliminatedPoll as any;
+            return { ok: true, poll: newPoll?._doc };
 
         } catch (error) {
             console.log(error);
@@ -37,10 +72,12 @@ export class PollService {
                 pagesNumber.push(i);
             }
 
+            const pollsEntity = polls.map(PollEntity.fromObject);
+
             return {
                 pagesNumber,
                 total,
-                polls,
+                polls: pollsEntity,
                 page,
                 next: (page < Math.ceil(total / limit)) ? `/api/poll?page=${page + 1}&limit=${limit}` : '',
                 previous: (page > 1) ? `/api/poll?page=${page + -1}&limit=${limit}` : '',
