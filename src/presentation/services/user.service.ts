@@ -5,9 +5,13 @@ import { RegisterUserDto } from "../../domain/dtos/register-user.dto";
 import { ValidatePasswordsDto } from "../../domain/dtos/validate-passwords";
 import { CustomError } from "../../domain/errors/custom.error";
 import { EmailService } from "./email.service";
+import { WssService } from "./wss.service";
 
 export class UserService {
-    constructor(private emailService: EmailService) { }
+    constructor(
+        private emailService: EmailService,
+        private wssService: WssService
+    ) { }
 
     login = async (loginUserDto: LoginUserDto) => {
 
@@ -23,6 +27,14 @@ export class UserService {
                     throw CustomError.notFound('The user does not exist or has not been validated');
                 }
 
+                if (user.isActive) {
+                    await userModel.findOneAndUpdate({ email: loginUserDto.user }, { isActive: false }, { new: true });
+                    this.wssService.sendAlertActiveAccount(user.email);
+                    throw CustomError.forbidden('There is a session initiated!');
+                }
+
+                await userModel.findOneAndUpdate({ email: user.email }, { isActive: true }, { new: true });
+
             }
 
             if (!loginUserDto.isByEmail) {
@@ -31,6 +43,14 @@ export class UserService {
                 if (!userByName || !userByName.validated) {
                     throw CustomError.notFound('The user does not exist or has not been validated');
                 }
+
+                if (userByName.isActive) {
+                    await userModel.findOneAndUpdate({ name: loginUserDto.user }, { isActive: false }, { new: true });
+                    this.wssService.sendAlertActiveAccount(userByName.email);
+                    throw CustomError.forbidden('There is a session initiated!');
+                }
+
+                await userModel.findOneAndUpdate({ name: loginUserDto.user }, { isActive: true }, { new: true });
             }
 
 
@@ -206,6 +226,25 @@ export class UserService {
         }
     }
 
+
+    closeUserSession = async (email: string) => {
+        try {
+            const user = await userModel.findOne({email});
+            if (!user) {
+                throw CustomError.notFound('User not found');
+            }
+
+            user.isActive = false;
+            await user.save()
+
+            return true;
+
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
     loginGoogle = async (accessToken: string) => {
         try {
             const response = await VerifyGoogleAdapter.googleVerify(accessToken);
@@ -232,17 +271,35 @@ export class UserService {
             }
 
             let _id;
-            
+
             if (!userByName?.google || !userByEmail?.google) {
                 _id = (await userModel.create(user))._id;
             }
 
             if (userByName?.google) {
+
                 _id = userByName._id;
+
+                if (userByName.isActive) {
+                    await userModel.findByIdAndUpdate(_id, { isActive: false }, { new: true });
+                    this.wssService.sendAlertActiveAccount(userByName.email!);
+                    throw CustomError.forbidden('There is a session initiated!');
+                }
+
+                await userModel.findByIdAndUpdate(_id, { isActive: true }, { new: true });
             }
 
             if (userByEmail?.google) {
+
                 _id = userByEmail._id;
+
+                if (userByEmail.isActive) {
+                    await userModel.findByIdAndUpdate(_id, { isActive: false }, { new: true });
+                    this.wssService.sendAlertActiveAccount(userByEmail.email!);
+                    throw CustomError.forbidden('There is a session initiated!');
+                }
+
+                await userModel.findByIdAndUpdate(_id, { isActive: true }, { new: true });
             }
 
             const token = await JwtAdapter.generateToken({ _id });

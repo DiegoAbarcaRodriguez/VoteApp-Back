@@ -61,25 +61,38 @@ export class PollController {
             res.status(400).json({ message: 'The _id is not valid!' })
         }
 
-        const [error, updatePollDto] = UpdatePollDto.create({ ...req.body, user_id: user._id });
+        const [error, updatePollDto] = UpdatePollDto.create({ ...req.body });
 
         if (error) {
             res.status(400).json({ message: error });
         }
 
-        this.pollService.updatePoll(updatePollDto!, _id)
+        this.pollService.updatePoll(updatePollDto!, _id, user._id)
             .then((resp) => res.json(resp))
             .catch(error => this.handleError(error, res));
     }
 
-    deletePoll = (req: Request, res: Response) => {
+    plusOneNumberParticipations = (req: Request, res: Response) => {
         const { _id } = req.params;
 
         if (!_id || !MongooseAdapter.isValidId(_id)) {
             res.status(400).json({ message: 'The _id is not valid!' })
         }
 
-        this.pollService.deletePoll(_id)
+        this.pollService.plusOneNumberParticipations(_id)
+            .then((resp) => res.json(resp))
+            .catch(error => this.handleError(error, res));
+    }
+
+    deletePoll = (req: Request, res: Response) => {
+        const { user } = req.body;
+        const { _id } = req.params;
+
+        if (!_id || !MongooseAdapter.isValidId(_id)) {
+            res.status(400).json({ message: 'The _id is not valid!' })
+        }
+
+        this.pollService.deletePoll(_id, user._id)
             .then((resp) => res.json(resp))
             .catch(error => this.handleError(error, res));
     }

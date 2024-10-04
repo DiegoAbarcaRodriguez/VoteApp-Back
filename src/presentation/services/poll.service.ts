@@ -24,11 +24,15 @@ export class PollService {
         }
     }
 
-    updatePoll = async (updatePollDto: UpdatePollDto, _id: string) => {
+    updatePoll = async (updatePollDto: UpdatePollDto, _id: string, user_id: string) => {
         try {
             const existingPoll = await pollModel.findById(_id);
             if (!existingPoll) {
                 throw CustomError.notFound('Poll not found!');
+            }
+
+            if (existingPoll.user_id !== user_id) {
+                throw CustomError.forbidden('This poll does not belong to you!');
             }
 
             const poll = await pollModel.findByIdAndUpdate(_id, updatePollDto.value, { new: true });
@@ -40,11 +44,15 @@ export class PollService {
         }
     }
 
-    deletePoll = async (_id: string) => {
+    deletePoll = async (_id: string, user_id: string) => {
         try {
             const existingPoll = await pollModel.findById(_id);
             if (!existingPoll) {
                 throw CustomError.notFound('Poll not found!');
+            }
+
+            if (existingPoll.user_id !== user_id) {
+                throw CustomError.forbidden('This poll does not belong to you!');
             }
 
             const eliminatedPoll = await pollModel.findByIdAndDelete(_id, { new: true });
@@ -82,6 +90,33 @@ export class PollService {
                 next: (page < Math.ceil(total / limit)) ? `/api/poll?page=${page + 1}&limit=${limit}` : '',
                 previous: (page > 1) ? `/api/poll?page=${page + -1}&limit=${limit}` : '',
             };
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
+    plusOneNumberParticipations = async (poll_id: string) => {
+        try {
+
+            const existingPoll = await pollModel.findById(poll_id);
+
+            if (!existingPoll) {
+                throw CustomError.notFound('Poll not found!');
+            }
+
+            existingPoll.numberOfParticipations++;
+
+            if (existingPoll.numberOfParticipations <= existingPoll.numberOfParticipants) {
+                await existingPoll.save();
+                return {
+                    ok: true,
+                    message: 'It has incremented successfully!'
+                };
+            } else {
+                throw CustomError.badRequest('The poll has ended!');
+            }
+
         } catch (error) {
             console.log(error);
             throw error;

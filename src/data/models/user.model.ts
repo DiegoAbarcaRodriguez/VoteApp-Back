@@ -4,12 +4,12 @@ const userSchema = new Schema(
     {
         email: {
             type: String,
-            required: [true, 'email is required'],
+            require: [true, 'email is required'],
             unique: true
         },
         password: {
             type: String,
-            required: [true, 'password is required']
+            require: [true, 'password is required']
         },
         validated: {
             type: Boolean,
@@ -28,6 +28,10 @@ const userSchema = new Schema(
         google: {
             type: Boolean,
             require: [true, 'The google parameter is required'],
+        },
+        isActive: {
+            type: Boolean,
+            default: false
         }
     }
 );

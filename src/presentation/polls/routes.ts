@@ -13,11 +13,12 @@ export class PollRoutes {
 
         const router = Router();
 
-        router.use(JWTMiddleware.validateJWT);
-        router.get('/', controller.getPolls);
-        router.post('/', controller.createPoll);
-        router.put('/:_id', controller.updatePoll);
-        router.delete('/:_id', controller.deletePoll);
+        router.get('/', JWTMiddleware.validateJWT, controller.getPolls);
+        router.post('/', JWTMiddleware.validateJWT, controller.createPoll);
+        router.put('/:_id', JWTMiddleware.validateJWT, controller.updatePoll);
+        router.delete('/:_id', JWTMiddleware.validateJWT, controller.deletePoll);
+
+        router.patch('/:_id', controller.plusOneNumberParticipations);
 
         return router;
     }

@@ -30,13 +30,23 @@ export class WssService {
         WssService._instance = new WssService(options);
     }
 
-    sendMessage(type: string, payload: Object) {
+    sendMessage(type: string, payload: Object, email: string, poll_id: string) {
         this.wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ type, payload }));
+                client.send(JSON.stringify({ type, payload, email, poll_id }));
             }
         });
     }
+
+    sendAlertActiveAccount(email: string) {
+        this.wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({ email, type: 'warning' }));
+            }
+        });
+    }
+
+
 
     start() {
         this.wss.on('connection', (ws: WebSocket) => {

@@ -3,11 +3,8 @@ import { CustomError } from "../../domain/errors/custom.error";
 import { UserService } from "../services/user.service";
 import { LoginUserDto } from "../../domain/dtos/login-user.dto";
 import { RegisterUserDto } from "../../domain/dtos/register-user.dto";
-import { JwtAdapter } from "../../config";
-import { userModel } from "../../data/models/user.model";
-import { RegularExpressions } from "../../config/regular-expressions";
+import { RegularExpressions } from '../../config/regular-expressions';
 import { ValidatePasswordsDto } from "../../domain/dtos/validate-passwords";
-import { error } from "console";
 
 
 
@@ -94,6 +91,19 @@ export class UserController {
         }
 
         this.userService.updatePassword(validatePasswordDto!)
+            .then(() => res.json({ ok: true }))
+            .catch((error) => this.handleError(error, res));
+
+
+    }
+    closeUserSession = (req: Request, res: Response) => {
+        const { email } = req.body;
+
+        if (!email || !RegularExpressions.email.test(email)) {
+            res.status(400).json({ ok: false, message: 'The email entered is not valid' });
+        }
+
+        this.userService.closeUserSession(email)
             .then(() => res.json({ ok: true }))
             .catch((error) => this.handleError(error, res));
 

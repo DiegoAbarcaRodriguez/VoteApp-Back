@@ -10,11 +10,12 @@ export class PollEntity {
         public title: string,
         public description: string,
         public numberOfParticipants: number,
+        public numberOfParticipations: number
 
     ) { }
 
     static fromObject(object: { [key: string]: any }) {
-        const { _id, title, numberOfParticipants = 0, description, user_id } = object;
+        const { _id, title, numberOfParticipants = 0, numberOfParticipations = 0, description, user_id } = object;
 
         if (!_id || !MongooseAdapter.isValidId(_id)) {
             throw CustomError.badRequest('Mising _id');
@@ -36,7 +37,11 @@ export class PollEntity {
             throw CustomError.badRequest('The number of participants must be greater than 3');
         }
 
-        return new PollEntity(_id, user_id, title, description, numberOfParticipants);
+        if (numberOfParticipations < 0) {
+            throw CustomError.badRequest('The number of participations must be positive');
+        }
+
+        return new PollEntity(_id, user_id, title, description, numberOfParticipants, numberOfParticipations);
 
     }
 }

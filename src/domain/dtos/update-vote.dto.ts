@@ -1,3 +1,5 @@
+import { MongooseAdapter } from "../../config";
+
 export class UpdateVoteDto {
 
     constructor(
@@ -23,7 +25,7 @@ export class UpdateVoteDto {
     static create(object: { [key: string]: any }): [string?, UpdateVoteDto?] {
         const { _id, title, description, amount = 0, img } = object;
 
-        if (!_id) return ['Mising _id'];
+        if (!_id || !MongooseAdapter.isValidId(_id)) return ['Mising _id'];
         if (amount < 0) ['Amount cannot be negative'];
         return [undefined, new UpdateVoteDto(_id, amount, title, description, img)];
 
