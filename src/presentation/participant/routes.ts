@@ -8,7 +8,7 @@ export class ParticipantRoutes {
         const participantService = new ParticipantService();
         const controller = new ParticipantController(participantService);
 
-        router.get('/:poll_id/:participant_id', controller.executeParticipation);
+        router.get('/:poll_id/:name', controller.executeParticipation);
         router.post('/', controller.verifyParticipant);
 
         return router;

@@ -17,17 +17,17 @@ export class ParticipantController {
     };
 
     executeParticipation = (req: Request, res: Response) => {
-        const { poll_id, participant_id } = req.params;
+        const { poll_id, name } = req.params;
 
         if (!MongooseAdapter.isValidId(poll_id)) {
             res.status(400).json({ message: 'The poll_id is not valid!' });
         }
 
-        if (!MongooseAdapter.isValidId(participant_id)) {
-            res.status(400).json({ message: 'The  participant_id is not valid!' });
+        if (!name || name.length === 0) {
+            res.status(400).json({ message: 'The  name of the participant is missing!' });
         }
 
-        this.participantService.executeParticipation(participant_id, poll_id)
+        this.participantService.executeParticipation(name, poll_id)
             .then(resp => res.json(resp))
             .catch(error => this.handleError(error, res));
     }

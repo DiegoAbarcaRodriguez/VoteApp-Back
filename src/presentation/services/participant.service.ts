@@ -4,14 +4,25 @@ import { CustomError } from "../../domain/errors/custom.error";
 
 export class ParticipantService {
 
-    executeParticipation = async (participant_id: string, poll_id: string) => {
+    executeParticipation = async (name: string, poll_id: string) => {
         try {
 
-            const existingPollParticipant = await pollParticipantModel.findOne({ participant_id, poll_id });
+            const existingParticipant = await participantModel.findOne({ name });
+            let participant_id: string = '';
 
-            if (existingPollParticipant) {
-                throw CustomError.forbidden('This user has already voted!');
+            if (!existingParticipant) {
+                participant_id = (await participantModel.create({ name }))._id.toString();
+            } else {
+
+                participant_id = existingParticipant!._id.toString();
+
+                const existingPollParticipant = await pollParticipantModel.findOne({ participant_id, poll_id });
+
+                if (existingPollParticipant) {
+                    throw CustomError.forbidden('This user has already voted!');
+                }
             }
+
 
             await pollParticipantModel.create({ participant_id, poll_id });
 
@@ -29,7 +40,6 @@ export class ParticipantService {
     verifyParticipant = async (name: string, poll_id: string) => {
         try {
             const existingParticipant = await participantModel.findOne({ name });
-            let participant;
 
             if (existingParticipant) {
                 const existingPollParticipant = await pollParticipantModel.findOne({ participant_id: existingParticipant._id, poll_id });
@@ -37,17 +47,12 @@ export class ParticipantService {
                 if (existingPollParticipant) {
                     throw CustomError.forbidden('This user has already voted!');
                 }
-            } else {
-                participant = await participantModel.create({ name });
-
             }
-
 
 
             return {
                 ok: true,
-                poll_id,
-                participant_id: existingParticipant?._id || participant?._id
+                poll_id
             }
 
 
