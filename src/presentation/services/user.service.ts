@@ -18,69 +18,41 @@ export class UserService {
         try {
 
             let user: any;
-            let userByName: any;
 
-            if (loginUserDto.isByEmail) {
-                user = await userModel.findOne({ email: loginUserDto.user });
+            user = await userModel.findOne({ email: loginUserDto.user });
 
-                if (!user || !user.validated) {
-                    throw CustomError.notFound('The user does not exist or has not been validated');
-                }
-
-                if (user.isActive) {
-                    await userModel.findOneAndUpdate({ email: loginUserDto.user }, { isActive: false }, { new: true });
-                    this.wssService.sendAlertActiveAccount(user.email);
-                    throw CustomError.forbidden('There is a session initiated!');
-                }
-
-                await userModel.findOneAndUpdate({ email: user.email }, { isActive: true }, { new: true });
-
+            if (!user || !user.validated) {
+                throw CustomError.notFound('The user does not exist or has not been validated');
             }
 
-            if (!loginUserDto.isByEmail) {
-                userByName = await userModel.findOne({ name: loginUserDto.user });
-
-                if (!userByName || !userByName.validated) {
-                    throw CustomError.notFound('The user does not exist or has not been validated');
-                }
-
-                if (userByName.isActive) {
-                    await userModel.findOneAndUpdate({ name: loginUserDto.user }, { isActive: false }, { new: true });
-                    this.wssService.sendAlertActiveAccount(userByName.email);
-                    throw CustomError.forbidden('There is a session initiated!');
-                }
-
-                await userModel.findOneAndUpdate({ name: loginUserDto.user }, { isActive: true }, { new: true });
+            if (user.isActive) {
+                await userModel.findOneAndUpdate({ email: loginUserDto.user }, { isActive: false }, { new: true });
+                this.wssService.sendAlertActiveAccount(user.email);
+                throw CustomError.forbidden('There is a session initiated!');
             }
 
+            await userModel.findOneAndUpdate({ email: user.email }, { isActive: true }, { new: true });
 
-            if (!bcryptAdapter.compare(loginUserDto.password, loginUserDto.isByEmail ? user.password : userByName.password)) {
+
+
+
+
+            if (!bcryptAdapter.compare(loginUserDto.password, user.password)) {
                 throw CustomError.unauthorized('The password or email is incorrect');
             }
 
-            const token = await JwtAdapter.generateToken({ _id: loginUserDto.isByEmail ? user._id : userByName._id });
+            const token = await JwtAdapter.generateToken({ _id: user._id });
 
             if (!token) {
                 throw CustomError.internalServer('It has ocurred an error by generating the token');
             }
 
 
-            if (loginUserDto.isByEmail) {
-                return {
-                    ok: true,
-                    token,
-                    user
-                }
-
-            } else {
-                return {
-                    ok: true,
-                    token,
-                    userByName
-                }
-
+            return {
+                ok: true,
+                token,
+                user
             }
-
 
 
 
@@ -98,15 +70,12 @@ export class UserService {
         try {
 
             const user = await userModel.findOne({ email: registerUserDto.email });
-            const userByName = await userModel.findOne({ name: registerUserDto.name })
 
             if (user) {
                 throw CustomError.badRequest('The email already registered');
             }
 
-            if (userByName) {
-                throw CustomError.badRequest('The name already registered');
-            }
+
 
             const token = UuidAdapter.v4();
             if (!token) {
@@ -229,7 +198,7 @@ export class UserService {
 
     closeUserSession = async (email: string) => {
         try {
-            const user = await userModel.findOne({email});
+            const user = await userModel.findOne({ email });
             if (!user) {
                 throw CustomError.notFound('User not found');
             }
@@ -256,9 +225,8 @@ export class UserService {
             const { given_name, email } = response!
 
             const userByEmail = await userModel.findOne({ email });
-            const userByName = await userModel.findOne({ name: given_name });
 
-            if ((userByEmail && !userByEmail.google) || (userByName && !userByName.google)) {
+            if (userByEmail && !userByEmail.google) {
                 throw CustomError.badRequest('The credentials of the google account already belong another account registered by conventional flow!');
             }
 
@@ -272,22 +240,10 @@ export class UserService {
 
             let _id;
 
-            if (!userByName?.google || !userByEmail?.google) {
+            if (!userByEmail) {
                 _id = (await userModel.create(user))._id;
             }
 
-            if (userByName?.google) {
-
-                _id = userByName._id;
-
-                if (userByName.isActive) {
-                    await userModel.findByIdAndUpdate(_id, { isActive: false }, { new: true });
-                    this.wssService.sendAlertActiveAccount(userByName.email!);
-                    throw CustomError.forbidden('There is a session initiated!');
-                }
-
-                await userModel.findByIdAndUpdate(_id, { isActive: true }, { new: true });
-            }
 
             if (userByEmail?.google) {
 

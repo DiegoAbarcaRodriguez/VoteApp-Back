@@ -4,6 +4,8 @@ import { PaginationDto } from "../../domain/dtos/pagination.dto";
 import { UpdatePollDto } from "../../domain/dtos/update-poll.dto";
 import { CustomError } from "../../domain/errors/custom.error";
 import { PollEntity } from '../../domain/entities/poll.entity';
+import { pollParticipantModel } from "../../data/models/poll-participants.model";
+import { VoteOptionModel } from "../../data";
 
 export class PollService {
     constructor() { }
@@ -31,7 +33,7 @@ export class PollService {
                 throw CustomError.notFound('Poll not found!');
             }
 
-            if (existingPoll.user_id !== user_id) {
+            if (existingPoll.user_id.toString() !== user_id) {
                 throw CustomError.forbidden('This poll does not belong to you!');
             }
 
@@ -51,8 +53,19 @@ export class PollService {
                 throw CustomError.notFound('Poll not found!');
             }
 
-            if (existingPoll.user_id !== user_id) {
+            if (existingPoll.user_id.toString() != user_id) {
                 throw CustomError.forbidden('This poll does not belong to you!');
+            }
+
+            const existingPollParticipant = await pollParticipantModel.find({ poll_id: _id });
+            const existingOptionsToVote = await VoteOptionModel.find({ poll_id: _id });
+
+            if (existingPollParticipant.length > 0) {
+                existingPollParticipant.forEach(async (pollParticipant) => await pollParticipantModel.findByIdAndDelete(pollParticipant._id.toString(), { new: true }));
+            }
+
+            if (existingOptionsToVote.length > 0) {
+                existingOptionsToVote.forEach(async (existingOptionVote) => await VoteOptionModel.findByIdAndDelete(existingOptionVote._id.toString(), { new: true }));
             }
 
             const eliminatedPoll = await pollModel.findByIdAndDelete(_id, { new: true });
@@ -72,7 +85,7 @@ export class PollService {
                 pollModel.find({ user_id })
                     .skip((page - 1) * limit)
                     .limit(limit),
-                pollModel.countDocuments()
+                pollModel.countDocuments({ user_id })
             ]);
 
             let pagesNumber: number[] = [];

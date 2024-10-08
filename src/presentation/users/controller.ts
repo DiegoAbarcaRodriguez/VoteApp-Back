@@ -39,7 +39,10 @@ export class UserController {
 
     signUp = async (req: Request, res: Response) => {
 
-        const [error, registerUserDto] = RegisterUserDto.create(req.body);
+        const { name, email } = req.body;
+        const nameString = name as string;
+        const emailString = email as string;
+        const [error, registerUserDto] = RegisterUserDto.create({ ...req.body, name: nameString.toLocaleLowerCase().trim(), email: emailString.toLocaleLowerCase().trim() });
 
         if (error) {
             res.status(400).json({ message: error });

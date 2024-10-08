@@ -22,7 +22,6 @@ const userSchema = new Schema(
         name: {
             type: String,
             require: [true, 'The name is required'],
-            unique: true
 
         },
         google: {
