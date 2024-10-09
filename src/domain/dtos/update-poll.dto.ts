@@ -4,8 +4,7 @@ export class UpdatePollDto {
     constructor(
         private title?: string,
         private description?: string,
-        private numberOfParticipants?: number,
-        private numberOfParticipations?: number,
+        private numberOfParticipants?: number
     ) { }
 
     get value() {
@@ -21,15 +20,12 @@ export class UpdatePollDto {
             object.numberOfParticipants = this.numberOfParticipants;
         }
 
-        if (this.numberOfParticipations) {
-            object.numberOfParticipants = this.numberOfParticipations;
-        }
 
         return object;
     }
 
     static create(object: { [key: string]: any }): [string?, UpdatePollDto?] {
-        const { title, description, numberOfParticipants = 0, numberOfParticipations = 0 } = object;
+        const { title, description, numberOfParticipants = 0} = object;
 
 
 
@@ -37,11 +33,9 @@ export class UpdatePollDto {
             return ['The numberOfParticipants is not valid'];
         }
 
-        if (!numberOfParticipations || numberOfParticipations < 0) {
-            return ['The numberOfParticipations is not valid'];
-        }
+     
 
-        return [undefined, new UpdatePollDto(title, description, numberOfParticipants, numberOfParticipations)];
+        return [undefined, new UpdatePollDto(title, description, numberOfParticipants)];
 
     }
 

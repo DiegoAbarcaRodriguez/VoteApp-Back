@@ -67,7 +67,7 @@ export class PollController {
             res.status(400).json({ message: error });
         }
 
-        this.pollService.updatePoll(updatePollDto!, _id, user._id)
+        this.pollService.updatePoll(updatePollDto!, _id, user._id.toString())
             .then((resp) => res.json(resp))
             .catch(error => this.handleError(error, res));
     }
